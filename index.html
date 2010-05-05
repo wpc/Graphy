@@ -11,8 +11,8 @@
         var paper = Raphael(x, y, w, h);
         var nodes = [];
         var springs = [];
-        var maxIters = 300;
-        var minusKinetEnergy = 10.0;
+        var maxIters = 500;
+        var minusKinetEnergy = 8.0;
         var ideaIterationIterval = 30; //ms
         
         var any = function(list, iterator) {
@@ -148,7 +148,7 @@
         var vy = 0.0;
         var fx = 0.0;
         var fy = 0.0;
-        var damping = 0.7;
+        var damping = 0.9;
         var chargeConst = 100000;
         var mass = 10;
         
