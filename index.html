@@ -11,7 +11,9 @@
         var paper = Raphael(x, y, w, h);
         var nodes = [];
         var springs = [];
-        var maxIters = 100;
+        var maxIters = 300;
+        var minusKinetEnergy = 10.0;
+        var ideaIterationIterval = 30; //ms
         
         var any = function(list, iterator) {
           for(var i = 0; i < list.length; i++) {
@@ -46,6 +48,10 @@
         }
         
         var updateNodes = function(passedDuration) {
+          if (passedDuration > 20 * ideaIterationIterval) {
+            return; // drop a iteration when lag happens
+          }
+          
           $.map(nodes, function(node) {
             var netForceX = 0;
             var netForceY = 0;
@@ -55,28 +61,49 @@
               netForceX += node.coulombRepulsionXTo(anotherNode);
               netForceY += node.coulombRepulsionYTo(anotherNode);
             })
-            
+
             $.map(nodes, function(anotherNode) {
               if(anotherNode == node) { return; }
               netForceX += node.hooksForceX();
               netForceY += node.hooksForceY();
             })
-                        
-            node.actOnForce(netForceX, netForceY, passedDuration / 10);
+            
+            node.force(netForceX, netForceY);
+          })
+          
+          $.map(nodes, function(node){
+            node.actOnForce(passedDuration);
           })
         }
         
+        var totalKineticEnergy = function() {
+          var result = 0;
+          $.map(nodes, function(node) {
+            result += node.kineticEnergy();
+          })
+          return result;
+        }
+        
         var drawIteration = function(currentIteration, timeslice) {
-          if( currentIteration === 0 ) {
+          console.log("currentIteration = %i", currentIteration)
+          console.log("totalKineticEnergy = %f", totalKineticEnergy())
+          if( currentIteration == 0 ) {
             $.map(nodes, function(node) { node.stop() });
             return;
           }
           
-          updateNodes(timeslice)
           var now = new Date().getTime();
+          
+          updateNodes(timeslice)
+          
+          if ( timeslice != 0 && totalKineticEnergy() < minusKinetEnergy ) {
+            drawIteration(0, 0);
+            return;
+          }
+          
           setTimeout(function() {
             drawIteration(currentIteration - 1, new Date() - now);
-          }, 20);
+          }, ideaIterationIterval);
         }
         
         var findOrCreateNode = function(name) {
@@ -119,7 +146,9 @@
         var view = null;
         var vx = 0.0;
         var vy = 0.0;
-        var damping = 0.3;
+        var fx = 0.0;
+        var fy = 0.0;
+        var damping = 0.7;
         var chargeConst = 100000;
         var mass = 10;
         
@@ -152,8 +181,17 @@
           
           distance: distance,
           
+          force: function(forceX, forceY) {
+            fx = forceX;
+            fy = forceY;
+          },
+          
           addSpring: function(s) {
             springs.push(s);
+          },
+          
+          kineticEnergy: function() {
+            return mass * Math.sqrt(sq(vx) + sq(vy));
           },
           
           coulombRepulsionXTo: function(anotherNode) {
@@ -170,7 +208,7 @@
             var fx = 0;
             $.map(springs, function(spring) {
               var another = spring.theOtherEndOf(public);
-              fx +=  spring.force(distance(another)) * (another.x() - x ) / distance(another);
+              fx +=  spring.force(distance(another)) * ( x - another.x() ) / distance(another);
             })
             return fx;
           },
@@ -179,20 +217,23 @@
             var fy = 0;
             $.map(springs, function(spring) {
               var another = spring.theOtherEndOf(public);
-              fy +=  spring.force(distance(another)) * (another.y() - y ) / distance(another);
+              fy +=  spring.force(distance(another)) * ( y - another.y() ) / distance(another);
             })
             return fy;
           },
           
-          actOnForce: function(forcex, forcey, duration) {
-            vx = (vx +  forcex / mass * duration) * damping;
-            vy = (vy +  forcey / mass * duration) * damping;            
+          actOnForce: function(duration) {
+            duration = duration / 50.0;
+            vx = (vx +  fx / mass * duration) * damping;
+            vy = (vy +  fy / mass * duration) * damping;            
             move(duration * vx, duration * vy);
           },
           
           stop: function() {
             vx = 0.0;
             vy = 0.0;
+            fx = 0.0;
+            fy = 0.0;
           },
           
           posString: function() {
@@ -218,14 +259,14 @@
       
       Graphy.Spring = function(paper, name, leftNode, rightNode) {
         var view = null;
-        var idealLength = 60;
-        var forceConst = 0.3;
+        var idealLength = 70;
+        var forceConst = 0.025;
         
         var public = {
           force: function() {
             var dist = leftNode.distance(rightNode);
             var delta = Math.max(0, dist - idealLength);
-            return forceConst * delta;
+            return (-1.0) * forceConst * delta;
           },
           
           paint: function() {
@@ -253,8 +294,13 @@
       graphy.add("cat", "is", "animal");
       graphy.add("dog", "is", "animal");
       graphy.add("dog", "has4", "leg");
-      // graphy.add("cat", "has4", "leg");
-      graphy.createNode("food")
+      graphy.add("cat", "has4", "leg");
+      graphy.add("dog", "eat", "bone");
+      graphy.add("cow", "eat", "grass");
+      graphy.add("cow", "is", "animal");
+      graphy.add("cow", "has4", "leg");
+      graphy.add("bone", "isfrom", "cow");
+      graphy.add("bone", "makeBy", "carbon");
       graphy.draw();
     })
   </script>
