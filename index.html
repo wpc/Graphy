@@ -2,11 +2,13 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8">
   <title>Graphy Example</title>
+
   <script src="lib/raphael.js" type="text/javascript" charset="utf-8"></script>
   <script src="lib/jquery.js" type="text/javascript" charset="utf-8"></script>
   
   <script type="text/javascript" charset="utf-8">
     $(document).ready(function() {
+      
       var Graphy = function(x, y, w, h) {
         var paper = Raphael(x, y, w, h);
         var nodes = [];
@@ -74,6 +76,10 @@
           $.map(nodes, function(node){
             node.actOnForce(passedDuration);
           })
+          
+          $.map(springs, function(spring){
+            spring.paint();
+          })
         }
         
         var totalKineticEnergy = function() {
@@ -85,8 +91,6 @@
         }
         
         var drawIteration = function(currentIteration, timeslice) {
-          console.log("currentIteration = %i", currentIteration)
-          console.log("totalKineticEnergy = %f", totalKineticEnergy())
           if( currentIteration == 0 ) {
             $.map(nodes, function(node) { node.stop() });
             return;
@@ -102,7 +106,7 @@
           }
           
           setTimeout(function() {
-            drawIteration(currentIteration - 1, new Date() - now);
+            drawIteration(currentIteration - 1, new Date().getTime() - now);
           }, ideaIterationIterval);
         }
         
@@ -138,6 +142,7 @@
         }
       }
       
+      
       Graphy.Node = function(paper, name) {
         var springs = [];
         var x = 0.0;
@@ -160,18 +165,14 @@
           x = x + dx;
           y = y + dy;
           view.translate(dx, dy);
-          $.map(springs, function(sprint) {
-            sprint.paint();
-          })
         }
         
-        var distance = function(x1, y1) {
-          if(y1 === undefined) {
-            var anotherNode = x1;
-            return Math.sqrt(sq(x - anotherNode.x()) + sq(y - anotherNode.y()))
-          } else {
-            return Math.sqrt(sq(x - x1) + sq(y - y1));
-          }
+        var distance = function(node) {
+          return distanceToPoint(node.x(), node.y());
+        }
+        
+        var distanceToPoint = function(x1, y1) {
+          return Math.sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1));
         }
         
         var public = {
@@ -241,7 +242,7 @@
           },
           
           overlap: function(x1, y1) {
-            return distance(x1, y1) < 2 * r;
+            return distanceToPoint(x1, y1) < 2 * r;
           },
           
           paint: function(pos) {
@@ -250,7 +251,8 @@
               y = pos[1];
               view = paper.circle(x, y, r);
               view.attr("fill", "#00bdf3");
-              view.attr("stroke", "#fff");              
+              view.attr("stroke", "#fff");
+              view.node.setAttribute("title", name);              
             }
           }
         }
@@ -259,8 +261,8 @@
       
       Graphy.Spring = function(paper, name, leftNode, rightNode) {
         var view = null;
-        var idealLength = 70;
-        var forceConst = 0.025;
+        var idealLength = 65;
+        var forceConst = 0.05;
         
         var public = {
           force: function() {
@@ -270,11 +272,13 @@
           },
           
           paint: function() {
-            if(view) {
-              view.remove();
-            }
             var pathString = "M" + leftNode.posString() + "L" + rightNode.posString();
-            view = paper.path(pathString).toBack();
+            if(view) {
+              view.attr("path", pathString);
+            } else {
+              view = paper.path(pathString).toBack();
+              view.node.setAttribute("title", name);              
+            }
           },
           
           theOtherEndOf: function(node) {
@@ -302,11 +306,12 @@
       graphy.add("bone", "isfrom", "cow");
       graphy.add("bone", "makeBy", "carbon");
       graphy.draw();
+      
+
     })
   </script>
 </head>
 
 <body>
-  
 </body>
 </html>
