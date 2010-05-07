@@ -13,9 +13,9 @@
         var paper = Raphael(x, y, w, h);
         var nodes = [];
         var springs = [];
-        var maxIters = 500;
+        var maxIters = 50;
         var minusKinetEnergy = 8.0;
-        var ideaIterationIterval = 30; //ms
+        var ideaIterationIterval = 40; //ms
         
         var any = function(list, iterator) {
           for(var i = 0; i < list.length; i++) {
@@ -149,6 +149,7 @@
         var y = 0.0;
         var r = 20.0;
         var view = null;
+        var tooltip = null
         var vx = 0.0;
         var vy = 0.0;
         var fx = 0.0;
@@ -156,9 +157,21 @@
         var damping = 0.9;
         var chargeConst = 100000;
         var mass = 10;
+
         
-        var sq = function(v) {
-          return v * v;
+        var showTooltip = function() {
+          if(vx!=0 || vy!=0) {
+            return;
+          }
+          tooltip = paper.text(x - 5, y - 35, name);
+          tooltip.attr({fill: '#4F575E', font: '20px Verdana'});
+          tooltip.attr('textpath', "M" + (x - 20) + " " + (y - 25) + " S" + (x + 20) + " " + (y -25) );
+        }
+        
+        var hideTooltip = function() {
+          if(tooltip) {
+            tooltip.remove();
+          }
         }
         
         var move = function(dx, dy) {
@@ -177,8 +190,8 @@
         
         var public = {
           name: function() {return name },
-          x: function() { return x},
-          y: function() { return y},
+          x: function() { return x; },
+          y: function() { return y; },
           
           distance: distance,
           
@@ -192,7 +205,7 @@
           },
           
           kineticEnergy: function() {
-            return mass * Math.sqrt(sq(vx) + sq(vy));
+            return mass * Math.sqrt(vx * vx + vy * vy);
           },
           
           coulombRepulsionXTo: function(anotherNode) {
@@ -252,7 +265,9 @@
               view = paper.circle(x, y, r);
               view.attr("fill", "#00bdf3");
               view.attr("stroke", "#fff");
-              view.node.setAttribute("title", name);              
+              view.node.setAttribute("title", name);
+              view.node.onmouseover = showTooltip;
+              view.node.onmouseout = hideTooltip;
             }
           }
         }
