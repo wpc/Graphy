@@ -17,10 +17,10 @@
         return result;
       }
       
-      var graphy = new Graphy(0, 0, 1500, 1000);
-      for(var i=0; i <= 50; i++) {
+      var graphy = new Graphy(0, 0, 1024, 768);
+      for(var i=0; i <= 100; i++) {
         var node = "node " + i;
-        graphy.add(node, "is", randomNode(50, node))
+        graphy.add(node, "is", randomNode(100, node))
       }
       graphy.draw();
     })
