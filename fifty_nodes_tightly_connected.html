@@ -1,0 +1,33 @@
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Graphy Example</title>
+
+  <script src="lib/raphael.js" type="text/javascript" charset="utf-8"></script>
+  <script src="lib/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="lib/graphy.js" type="text/javascript" charset="utf-8"></script>
+  
+  <script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+      var randomNode = function(top, notEqual) {
+        var result = "node " + Math.ceil(Math.random() * top);
+        if(result == notEqual) {
+          result = randomNode(top, notEqual);
+        }
+        return result;
+      }
+      
+      var graphy = new Graphy(0, 0, 1500, 1000);
+      for(var i=0; i <= 50; i++) {
+        var node = "node " + i;
+        graphy.add(node, "is", randomNode(50, node))
+        graphy.add(node, "is", randomNode(50, node))
+      }
+      graphy.draw();
+    })
+  </script>
+</head>
+
+<body>
+</body>
+</html>
