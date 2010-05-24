@@ -16,8 +16,11 @@
         }
         return result;
       }
-      var graphy = new Graphy(0, 0, 1024, 768);      
-      for(var i=1; i <= 100; i++) {
+      var graphy = new Graphy(0, 0, 1024, 768);     
+      graphy.add("node 1", "is", "node 2"); 
+      graphy.add("node 2", "is", "node 3"); 
+      graphy.add("node 3", "is", "node 1"); 
+      for(var i=4; i <= 100; i++) {
         var node = "node " + i;
         graphy.add(node, "is", randomNode(3, node))
       }
